@@ -1,0 +1,159 @@
+
+services:
+  db:
+    image: mariadb:10.6
+    healthcheck:
+      test: mysqladmin ping -h localhost --password=$$MYSQL_ROOT_PASSWORD
+      interval: 1s
+      retries: 15
+    deploy:
+      restart_policy:
+        condition: on-failure
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - ./mariadb-data:/var/lib/mysql
+
+  redis-cache:
+    image: redis:6.2-alpine
+    volumes:
+      - redis-cache-data:/data
+
+  redis-queue:
+    image: redis:6.2-alpine
+    volumes:
+      - redis-queue-data:/data
+
+  redis-socketio:
+    image: redis:6.2-alpine
+    volumes:
+      - redis-socketio-data:/data
+
+  configurator:
+    image: frappe/erpnext:${ERPNEXT_VERSION}
+    deploy:
+      restart_policy:
+        condition: none
+    entrypoint:
+      - bash
+      - -c
+    command:
+      - >
+        ls -1 apps > sites/apps.txt;
+        bench set-config -g db_host db;
+        bench set-config -g redis_cache "redis://redis-cache:6379";
+        bench set-config -g redis_queue "redis://redis-queue:6379";
+        bench set-config -g redis_socketio "redis://redis-socketio:6379";
+    environment:
+      DB_HOST: db
+      REDIS_CACHE: redis-cache:6379
+      REDIS_QUEUE: redis-queue:6379
+      REDIS_SOCKETIO: redis-socketio:6379
+    volumes:
+      - ./sites:/home/frappe/frappe-bench/sites
+      - apps-data:/home/frappe/frappe-bench/apps
+      - ./custom_app:/home/frappe/frappe-bench/custom_app
+    user: "${USER_ID}:${GROUP_ID}"
+
+  backend:
+    image: frappe/erpnext:${ERPNEXT_VERSION}
+    deploy:
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./sites:/home/frappe/frappe-bench/sites
+      - apps-data:/home/frappe/frappe-bench/apps
+      - ./custom_app:/home/frappe/frappe-bench/custom_app
+    user: "${USER_ID}:${GROUP_ID}"
+
+  frontend:
+    image: frappe/erpnext:${ERPNEXT_VERSION}
+    deploy:
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      - backend
+    command:
+      - nginx-entrypoint.sh
+    environment:
+      BACKEND: backend:8000
+      FRAPPE_SITE_NAME_HEADER: ${SITENAME}
+      SOCKETIO: websocket:9000
+      UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "off"
+      PROXY_READ_TIMEOUT: 120
+      CLIENT_MAX_BODY_SIZE: 50m
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./sites:/home/frappe/frappe-bench/sites
+      - apps-data:/home/frappe/frappe-bench/apps
+      - ./custom_app:/home/frappe/frappe-bench/custom_app
+
+  websocket:
+    image: frappe/erpnext:${ERPNEXT_VERSION}
+    deploy:
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    command:
+      - node
+      - /home/frappe/frappe-bench/apps/frappe/socketio.js
+    volumes:
+      - ./sites:/home/frappe/frappe-bench/sites
+      - apps-data:/home/frappe/frappe-bench/apps
+      - ./custom_app:/home/frappe/frappe-bench/custom_app
+    user: "${USER_ID}:${GROUP_ID}"
+
+  scheduler:
+    image: frappe/erpnext:${ERPNEXT_VERSION}
+    deploy:
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    command:
+      - bench
+      - schedule
+    volumes:
+      - ./sites:/home/frappe/frappe-bench/sites
+      - apps-data:/home/frappe/frappe-bench/apps
+      - ./custom_app:/home/frappe/frappe-bench/custom_app
+    user: "${USER_ID}:${GROUP_ID}"
+
+  worker-default:
+    image: frappe/erpnext:${ERPNEXT_VERSION}
+    deploy:
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    command:
+      - bench
+      - worker
+      - --queue
+      - default,short
+    volumes:
+      - ./sites:/home/frappe/frappe-bench/sites
+      - apps-data:/home/frappe/frappe-bench/apps
+      - ./custom_app:/home/frappe/frappe-bench/custom_app
+    user: "${USER_ID}:${GROUP_ID}"
+
+volumes:
+  redis-cache-data:
+  redis-queue-data:
+  redis-socketio-data:
+  apps-data:

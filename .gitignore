@@ -1,12 +1,26 @@
-# Docker y System
-.DS_Store
+# Bases de datos y Volúmenes locales
 mariadb-data/
 redis-data/
 sites/
+
+# Logs de la aplicación
 logs/
-config/
 *.log
 
-# Python/Frappe
+# Archivos temporales de Python y cachés
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Entornos virtuales (por si se usan localmente)
+venv/
+env/
+.env
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
