@@ -1,0 +1,12 @@
+# Docker y System
+.DS_Store
+mariadb-data/
+redis-data/
+sites/
+logs/
+config/
+*.log
+
+# Python/Frappe
+__pycache__/
+*.pyc
