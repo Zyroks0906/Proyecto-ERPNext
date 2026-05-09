@@ -1,7 +1,10 @@
 
 services:
   db:
-    image: mariadb:10.6
+    image: public.ecr.aws/docker/library/mariadb:10.6
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     healthcheck:
       test: mysqladmin ping -h localhost --password=$$MYSQL_ROOT_PASSWORD
       interval: 1s
@@ -20,17 +23,26 @@ services:
       - ./mariadb-data:/var/lib/mysql
 
   redis-cache:
-    image: redis:6.2-alpine
+    image: public.ecr.aws/docker/library/redis:6.2-alpine
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     volumes:
       - redis-cache-data:/data
 
   redis-queue:
-    image: redis:6.2-alpine
+    image: public.ecr.aws/docker/library/redis:6.2-alpine
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     volumes:
       - redis-queue-data:/data
 
   redis-socketio:
-    image: redis:6.2-alpine
+    image: public.ecr.aws/docker/library/redis:6.2-alpine
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     volumes:
       - redis-socketio-data:/data
 
@@ -45,6 +57,9 @@ services:
     command:
       - >
         ls -1 apps > sites/apps.txt;
+        if [ ! -e sites/common_site_config.json ]; then
+          echo "{}" > sites/common_site_config.json;
+        fi;
         bench set-config -g db_host db;
         bench set-config -g redis_cache "redis://redis-cache:6379";
         bench set-config -g redis_queue "redis://redis-queue:6379";
@@ -57,7 +72,7 @@ services:
     volumes:
       - ./sites:/home/frappe/frappe-bench/sites
       - apps-data:/home/frappe/frappe-bench/apps
-      - ./custom_app:/home/frappe/frappe-bench/custom_app
+      - ./custom_app:/home/frappe/frappe-bench/apps/custom_app
     user: "${USER_ID}:${GROUP_ID}"
 
   backend:
@@ -71,7 +86,7 @@ services:
     volumes:
       - ./sites:/home/frappe/frappe-bench/sites
       - apps-data:/home/frappe/frappe-bench/apps
-      - ./custom_app:/home/frappe/frappe-bench/custom_app
+      - ./custom_app:/home/frappe/frappe-bench/apps/custom_app
     user: "${USER_ID}:${GROUP_ID}"
 
   frontend:
@@ -97,7 +112,7 @@ services:
     volumes:
       - ./sites:/home/frappe/frappe-bench/sites
       - apps-data:/home/frappe/frappe-bench/apps
-      - ./custom_app:/home/frappe/frappe-bench/custom_app
+      - ./custom_app:/home/frappe/frappe-bench/apps/custom_app
 
   websocket:
     image: frappe/erpnext:${ERPNEXT_VERSION}
@@ -113,7 +128,7 @@ services:
     volumes:
       - ./sites:/home/frappe/frappe-bench/sites
       - apps-data:/home/frappe/frappe-bench/apps
-      - ./custom_app:/home/frappe/frappe-bench/custom_app
+      - ./custom_app:/home/frappe/frappe-bench/apps/custom_app
     user: "${USER_ID}:${GROUP_ID}"
 
   scheduler:
@@ -130,7 +145,7 @@ services:
     volumes:
       - ./sites:/home/frappe/frappe-bench/sites
       - apps-data:/home/frappe/frappe-bench/apps
-      - ./custom_app:/home/frappe/frappe-bench/custom_app
+      - ./custom_app:/home/frappe/frappe-bench/apps/custom_app
     user: "${USER_ID}:${GROUP_ID}"
 
   worker-default:
@@ -149,7 +164,7 @@ services:
     volumes:
       - ./sites:/home/frappe/frappe-bench/sites
       - apps-data:/home/frappe/frappe-bench/apps
-      - ./custom_app:/home/frappe/frappe-bench/custom_app
+      - ./custom_app:/home/frappe/frappe-bench/apps/custom_app
     user: "${USER_ID}:${GROUP_ID}"
 
 volumes:
