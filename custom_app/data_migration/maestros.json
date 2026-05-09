@@ -1,0 +1,66 @@
+{
+  "Item": [
+    {
+      "item_code": "FC-PROD-001",
+      "item_name": "Servidor FluxCore Pro",
+      "item_group": "Hardware",
+      "stock_uom": "Nos"
+    },
+    {
+      "item_code": "FC-PROD-002",
+      "item_name": "Licencia FluxCore ERP",
+      "item_group": "Software",
+      "stock_uom": "Nos"
+    },
+    {
+      "item_code": "FC-PROD-003",
+      "item_name": "Switch Gigabit 24 Port",
+      "item_group": "Hardware",
+      "stock_uom": "Nos"
+    },
+    {
+      "item_code": "FC-PROD-004",
+      "item_name": "Monitor Ultrawide 34\"",
+      "item_group": "Hardware",
+      "stock_uom": "Nos"
+    },
+    {
+      "item_code": "FC-PROD-005",
+      "item_name": "Teclado Mecánico",
+      "item_group": "Hardware",
+      "stock_uom": "Nos"
+    }
+  ],
+  "Customer": [
+    {
+      "customer_name": "Tech Innovators SL",
+      "customer_group": "Commercial",
+      "territory": "Spain"
+    },
+    {
+      "customer_name": "Global Data Corp",
+      "customer_group": "Commercial",
+      "territory": "Spain"
+    },
+    {
+      "customer_name": "NextGen Systems",
+      "customer_group": "Commercial",
+      "territory": "Spain"
+    },
+    {
+      "customer_name": "Cloud Solutions Inc",
+      "customer_group": "Commercial",
+      "territory": "Spain"
+    }
+  ],
+  "Supplier": [
+    {
+      "supplier_name": "Hardware Distribuidores",
+      "supplier_group": "Distributor"
+    },
+    {
+      "supplier_name": "Mayorista IT Global",
+      "supplier_group": "Distributor"
+    }
+  ]
+}
