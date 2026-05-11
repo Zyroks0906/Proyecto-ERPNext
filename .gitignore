@@ -16,7 +16,7 @@ __pycache__/
 .coverage
 htmlcov/
 
-# Entornos virtuales (por si se usan localmente)
+# Entornos virtuales
 venv/
 env/
 .env
@@ -24,3 +24,6 @@ env/
 # Archivos de sistema operativo
 .DS_Store
 Thumbs.db
+
+# Python metadata
+*.egg-info/
