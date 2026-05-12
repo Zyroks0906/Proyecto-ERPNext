@@ -17,3 +17,7 @@ doc_events = {
         "validate": "custom_app.scripts.custom_validations.validate_customer_account_manager"
     }
 }
+
+doctype_js = {
+    "Item": "public/js/item.js"
+}
