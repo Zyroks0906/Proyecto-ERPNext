@@ -35,6 +35,12 @@ def run():
             "options": "User",
             "insert_after": "customer_name"
         }).insert()
+        print("Custom Field 'custom_tecnico_responsable' created on Customer.")
+    
+    # Eliminar campo con acento si existe (limpieza)
+    if frappe.db.exists("Custom Field", {"dt": "Customer", "fieldname": "custom_técnico_responsable"}):
+        frappe.db.delete("Custom Field", {"dt": "Customer", "fieldname": "custom_técnico_responsable"})
+        print("Obsolete accented field 'custom_técnico_responsable' removed.")
     if not frappe.db.exists("Report", "Reporte de Garantías FluxCore"):
         frappe.get_doc({
             "doctype": "Report",
