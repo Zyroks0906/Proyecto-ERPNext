@@ -87,6 +87,21 @@ services:
       - ./sites:/home/frappe/frappe-bench/sites
       - apps-data:/home/frappe/frappe-bench/apps
       - ./apps/custom_app:/home/frappe/frappe-bench/apps/custom_app
+    command:
+      - bash
+      - -c
+      - >
+        /home/frappe/frappe-bench/env/bin/pip install -e /home/frappe/frappe-bench/apps/custom_app &&
+        /home/frappe/frappe-bench/env/bin/gunicorn
+        --chdir=/home/frappe/frappe-bench/sites
+        --bind=0.0.0.0:8000
+        --threads=4
+        --workers=2
+        --worker-class=gthread
+        --worker-tmp-dir=/dev/shm
+        --timeout=120
+        --preload
+        frappe.app:application
     user: "${USER_ID}:${GROUP_ID}"
 
   frontend:
@@ -140,8 +155,11 @@ services:
       db:
         condition: service_healthy
     command:
-      - bench
-      - schedule
+      - bash
+      - -c
+      - >
+        /home/frappe/frappe-bench/env/bin/pip install -e /home/frappe/frappe-bench/apps/custom_app &&
+        bench schedule
     volumes:
       - ./sites:/home/frappe/frappe-bench/sites
       - apps-data:/home/frappe/frappe-bench/apps
@@ -157,10 +175,11 @@ services:
       db:
         condition: service_healthy
     command:
-      - bench
-      - worker
-      - --queue
-      - default,short
+      - bash
+      - -c
+      - >
+        /home/frappe/frappe-bench/env/bin/pip install -e /home/frappe/frappe-bench/apps/custom_app &&
+        bench worker --queue default,short
     volumes:
       - ./sites:/home/frappe/frappe-bench/sites
       - apps-data:/home/frappe/frappe-bench/apps

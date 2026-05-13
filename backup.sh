@@ -6,19 +6,20 @@ fi
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_DIR="./backups"
-DB_CONTAINER="db"
-DB_NAME=${DB_NAME:-"_1be545f49615560a"}
-ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+OUTPUT_FILE="$BACKUP_DIR/backup_final_$TIMESTAMP.sql"
 
 mkdir -p $BACKUP_DIR
 
-echo "🚀 Iniciando dump de la base de datos MariaDB..."
+echo "🚀 Iniciando backup de la base de datos MariaDB..."
 
-docker exec $DB_CONTAINER /usr/bin/mysqldump -u root -p$ROOT_PASSWORD --all-databases > $BACKUP_DIR/db_backup_$TIMESTAMP.sql
+# Usando docker compose exec en lugar de docker exec
+docker compose exec -T db mariadb-dump -u root -p$MYSQL_ROOT_PASSWORD --all-databases > $OUTPUT_FILE
 
 if [ $? -eq 0 ]; then
-    echo "✅ Backup completado con éxito: $BACKUP_DIR/db_backup_$TIMESTAMP.sql"
+    echo "✅ Backup completado con éxito: $OUTPUT_FILE"
+    cp $OUTPUT_FILE ./backup_final_entrega.sql
+    echo "📄 Copia de entrega creada: ./backup_final_entrega.sql"
 else
-    echo "❌ Error al realizar el backup."
+    echo "❌ Error al realizar el backup. Asegúrate de que el contenedor 'db' esté corriendo."
     exit 1
 fi

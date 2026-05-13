@@ -8,6 +8,12 @@ app_license = "mit"
 # Esto es lo que falta para que el sistema no falle en el About
 app_version = "0.0.1"
 
+# Fixtures - Exportación de personalizaciones
+fixtures = [
+    "Custom Field",
+    "Report"
+]
+
 # Lógica Funcional - Sesión 4 (Alejandro)
 doc_events = {
     "Item": {
