@@ -1,0 +1,142 @@
+version: '3'
+
+services:
+  db:
+    image: public.ecr.aws/docker/library/mariadb:10.6
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    healthcheck:
+      test: mysqladmin ping -h localhost --password=$$MYSQL_ROOT_PASSWORD
+      interval: 1s
+      retries: 15
+    deploy:
+      restart_policy:
+        condition: on-failure
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+
+  redis-cache:
+    image: public.ecr.aws/docker/library/redis:6.2-alpine
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    volumes:
+      - redis-cache-data:/data
+
+  redis-queue:
+    image: public.ecr.aws/docker/library/redis:6.2-alpine
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    volumes:
+      - redis-queue-data:/data
+
+  redis-socketio:
+    image: public.ecr.aws/docker/library/redis:6.2-alpine
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    volumes:
+      - redis-socketio-data:/data
+
+  backend:
+    image: frappe/erpnext:${ERPNEXT_VERSION}
+    deploy:
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./sites:/home/frappe/frappe-bench/sites
+      - apps-data:/home/frappe/frappe-bench/apps
+    user: "${USER_ID}:${GROUP_ID}"
+
+  frontend:
+    image: frappe/erpnext:${ERPNEXT_VERSION}
+    deploy:
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      - backend
+    command:
+      - nginx-entrypoint.sh
+    environment:
+      BACKEND: backend:8000
+      FRAPPE_SITE_NAME_HEADER: ${SITENAME}
+      SOCKETIO: websocket:9000
+      UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "off"
+      PROXY_READ_TIMEOUT: 120
+      CLIENT_MAX_BODY_SIZE: 50m
+    ports:
+      - "80:8080"
+    volumes:
+      - ./sites:/home/frappe/frappe-bench/sites
+      - apps-data:/home/frappe/frappe-bench/apps
+
+  websocket:
+    image: frappe/erpnext:${ERPNEXT_VERSION}
+    deploy:
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    command:
+      - node
+      - /home/frappe/frappe-bench/apps/frappe/socketio.js
+    volumes:
+      - ./sites:/home/frappe/frappe-bench/sites
+      - apps-data:/home/frappe/frappe-bench/apps
+    user: "${USER_ID}:${GROUP_ID}"
+
+  scheduler:
+    image: frappe/erpnext:${ERPNEXT_VERSION}
+    deploy:
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    command:
+      - bench
+      - schedule
+    volumes:
+      - ./sites:/home/frappe/frappe-bench/sites
+      - apps-data:/home/frappe/frappe-bench/apps
+    user: "${USER_ID}:${GROUP_ID}"
+
+  worker-default:
+    image: frappe/erpnext:${ERPNEXT_VERSION}
+    deploy:
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    command:
+      - bench
+      - worker
+      - --queue
+      - default,short
+    volumes:
+      - ./sites:/home/frappe/frappe-bench/sites
+      - apps-data:/home/frappe/frappe-bench/apps
+    user: "${USER_ID}:${GROUP_ID}"
+
+volumes:
+  mariadb-data:
+  redis-cache-data:
+  redis-queue-data:
+  redis-socketio-data:
+  apps-data:
